@@ -1,0 +1,20 @@
+{
+  "version": "2",
+  "build_cookbook": {
+    "name": "build_cookbook",
+    "path": ".delivery/build_cookbook"
+  },
+  "skip_phases": [],
+  "job_dispatch": {
+    "version": "v2"
+  },
+  "dependencies": [],
+  "delivery-truck": {
+    "publish": {
+      "chef_server": true
+    },
+    "lint": {
+      "enable_cookstyle": true
+    }
+  }
+}
