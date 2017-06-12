@@ -63,7 +63,7 @@ action :install do
   end
 
   # TODO: Add checks to ensure Docker version at supported levels as well
-  execute 'Install NetApp Docker Volume Plugin' do
+  execute "Install NetApp Docker Volume Plugin: #{new_resource.ndvp_config}" do
     command <<-EOF
     docker plugin install --grant-all-permissions netapp/ndvp-plugin:#{new_resource.plugin_version} \
     --alias #{new_resource.config_name} config=/etc/netappdvp/#{new_resource.ndvp_config}
@@ -71,7 +71,7 @@ action :install do
     not_if "docker plugin list | grep #{new_resource.config_name}:#{new_resource.plugin_version}"
   end
 
-  execute 'Enable NetApp Docker Volume Plugin' do
+  execute "Enable NetApp Docker Volume Plugin: #{new_resource.ndvp_config}" do
     command "docker plugin enable #{new_resource.config_name}"
     only_if "docker plugin list | grep #{new_resource.config_name} | grep false"
   end
