@@ -62,18 +62,20 @@ action :install do
     raise 'Failed to install nDVP due to illegal content-type'
   end
 
-  # TODO: Add checks to ensure Docker version at supported levels as well
-  execute "Install NetApp Docker Volume Plugin: #{new_resource.ndvp_config}" do
-    command <<-EOF
-    docker plugin install --grant-all-permissions netapp/ndvp-plugin:#{new_resource.plugin_version} \
-    --alias #{new_resource.config_name} config=/etc/netappdvp/#{new_resource.ndvp_config}
-    EOF
-    not_if "docker plugin list | grep #{new_resource.config_name}:#{new_resource.plugin_version}"
-  end
+  converge_by("#{new_resource.name}: Install NetApp Docker Volume configuration") do
+    # TODO: Add checks to ensure Docker version at supported levels as well
+    execute "#{new_resource.name}: Install NetApp Docker Volume Plug-in" do
+      command <<-EOF
+      docker plugin install --grant-all-permissions netapp/ndvp-plugin:#{new_resource.plugin_version} \
+      --alias #{new_resource.config_name} config=/etc/netappdvp/#{new_resource.ndvp_config}
+      EOF
+      not_if "docker plugin list | grep #{new_resource.config_name}:#{new_resource.plugin_version}"
+    end
 
-  execute "Enable NetApp Docker Volume Plugin: #{new_resource.ndvp_config}" do
-    command "docker plugin enable #{new_resource.config_name}"
-    only_if "docker plugin list | grep #{new_resource.config_name} | grep false"
+    execute "#{new_resource.name}: Enable NetApp Docker Volume Plug-in" do
+      command "docker plugin enable #{new_resource.config_name}"
+      only_if "docker plugin list | grep #{new_resource.config_name} | grep false"
+    end
   end
 
   return new_resource.updated_by_last_action(true)
@@ -89,7 +91,7 @@ action :config do
   # Create the directory for the configuration files. Due to CHEF-3694, we need
   # to have unique names for the directory resource otherwise, it will report
   # that we are using resource cloning when multiple resources are declared.
-  directory "Directory path for #{new_resource.ndvp_config}" do
+  directory "#{new_resource.name}: Directory /etc/netappdvp" do
     path '/etc/netappdvp'
     recursive true
     action :create
@@ -122,7 +124,8 @@ action :config do
 
   config_file['defaults'] = defaults unless defaults.empty?
 
-  file "/etc/netappdvp/#{new_resource.ndvp_config}" do
+  file "#{new_resource.name}: /etc/netappdvp/#{new_resource.ndvp_config}" do
+    path "/etc/netappdvp/#{new_resource.ndvp_config}"
     content JSON.pretty_generate(config_file)
     mode '0755'
     sensitive false
@@ -133,15 +136,15 @@ action :config do
 end
 
 action :enable do
-  execute 'Enable NetApp Docker Volume Plugin' do
+  execute "#{new_resource.name}: Enable NetApp Docker Volume Plug-in" do
     command "docker plugin enable #{new_resource.config_name}"
-    only_if "docker plugin list | grep #{new_resource.config_name} | grep false"
+    only_if "docker plugin list | grep #{new_resource.config_name} | grep true"
   end
   return new_resource.updated_by_last_action(true)
 end
 
 action :disable do
-  execute 'Disable NetApp Docker Volume Plugin' do
+  execute "#{new_resource.name}: Disable NetApp Docker Volume Plug-in" do
     command "docker plugin disable #{new_resource.config_name}"
     only_if "docker plugin list | grep #{new_resource.config_name} | grep true"
   end
@@ -159,19 +162,21 @@ action_class do
   end
 
   def install_docker
-    converge_by('Install Docker services') do
-      docker_installation 'default' do
+    converge_by("Install Docker services: #{new_resource.ndvp_config}") do
+      docker_installation "#{new_resource.name}: default" do
         action :create
       end
 
       # By default, other users will need to be added to the Docker unix group in order to have non-sudo
       # required access to the docker binary.  This array will add the users.
-      group 'docker' do
+      group "#{new_resource.name}: docker" do
+        group_name 'docker'
         members node['docker']['members']
         not_if { node['docker']['members'].nil? }
       end
 
-      service 'docker' do
+      service "#{new_resource.name}: docker" do
+        service_name 'docker'
         action [:enable, :start]
       end
     end
@@ -181,42 +186,49 @@ action_class do
     converge_by('Install NAS prerequisites for nDVP') do
       case node['platform']
       when 'debian', 'ubuntu'
-        package 'nfs-common' do
+        package "#{new_resource.name}: nfs-common" do
+          package_name 'nfs-common'
           action :install
         end
       when 'centos', 'redhat', 'amazon'
-        package 'nfs-utils' do
+        package "#{new_resource.name}: nfs-utils" do
+          package_name 'nfs-utils'
           action :install
         end
       else
         raise 'Unsupported platform.  Unable to install the NetApp docker prerequisites for NAS'
       end
 
-      service 'rpcbind' do
+      service "#{new_resource.name}: rpcbind" do
+        service_name 'rpcbind'
         action [:enable, :start]
       end
 
-      directory '/etc/iscsi' do
+      directory "#{new_resource.name}: /etc/iscsi" do
         # https://github.com/NetApp/netappdvp/issues/82
+        path '/etc/iscsi'
         action :create
       end
 
-      directory '/etc/systemd/system/docker.service.d/' do
+      directory "#{new_resource.name}: /etc/systemd/system/docker.service.d/" do
+        path '/etc/systemd/system/docker.service.d/'
         recursive true
         action :create
       end
 
-      file '/etc/systemd/system/docker.service.d/netappdvp.conf' do
+      file "#{new_resource.name}: /etc/systemd/system/docker.service.d/netappdvp.conf" do
+        path '/etc/systemd/system/docker.service.d/netappdvp.conf'
         content <<-EOF
       [Unit]
       Requires=rpcbind.service
       EOF
         mode '0755'
         action :create
-        notifies :run, 'execute[systemctl daemon-reload]', :immediately
+        notifies :run, "execute[#{new_resource.name}: systemctl daemon-reload]", :immediately
       end
 
-      execute 'systemctl daemon-reload' do
+      execute "#{new_resource.name}: systemctl daemon-reload" do
+        command 'systemctl daemon-reload'
         action :nothing
       end
     end
@@ -239,10 +251,14 @@ action_class do
 
   def install_debian_san
     %w(open-iscsi lsscsi sg3-utils multipath-tools scsitools).each do |pkg|
-      package pkg
+      package "#{new_resource.name}: #{pkg}" do
+        package_name pkg
+        action :install
+      end
     end
 
-    file '/etc/multipath.conf' do
+    file "#{new_resource.name}: /etc/multipath.conf" do
+      path '/etc/multipath.conf'
       content <<-EOF
     defaults {
         user_friendly_names yes
@@ -254,7 +270,8 @@ action_class do
     end
 
     %w(open-iscsi multipath-tools).each do |srv|
-      service srv do
+      service "#{new_resource.name}: #{srv}" do
+        service_name srv
         action [:enable, :start]
       end
     end
@@ -262,26 +279,30 @@ action_class do
 
   def install_redhat_san
     %w(lsscsi iscsi-initiator-utils sg3_utils device-mapper-multipath).each do |pkg|
-      package pkg
+      package "#{new_resource.name}: #{pkg}" do
+        package_name pkg
+        action :install
+      end
     end
 
-    execute 'Setup Multipath daemon' do
+    execute "#{new_resource.name}: Setup Multipath daemon" do
       command 'mpathconf --enable --with_multipathd y'
     end
 
     %w(iscsid multipathd iscsi).each do |srv|
-      service srv do
+      service "#{new_resource.name}: #{srv}" do
+        service_name srv
         action [:enable, :start]
       end
     end
   end
 
   def discover_iscsi_targets
-    execute 'Discover iSCSI Target' do
+    execute "#{new_resource.name}: Discover iSCSI Target" do
       command "iscsiadm -m discoverydb -t st -p #{new_resource.ontap_data_ip} --discover"
     end
 
-    execute 'Log into iSCSI Target' do
+    execute "#{new_resource.name}: Log into iSCSI Target" do
       command "iscsiadm -m node -p #{new_resource.ontap_data_ip} --login"
     end
   end

@@ -55,41 +55,42 @@ describe 'netapp_docker_test::ontap_san' do
             expect(chef_run).to run_execute('Create test san volume')
 
             # LWRP Actions
-            expect(chef_run).to create_docker_installation('default')
-            expect(chef_run).to enable_service('docker')
-            expect(chef_run).to start_service('docker')
-            expect(chef_run).to create_directory('Directory path for ontap_iscsi.json')
-            expect(chef_run).to create_file('/etc/netappdvp/ontap_iscsi.json')
-            expect(chef_run).to run_execute('Install NetApp Docker Volume Plugin')
-            expect(chef_run).to run_execute('Enable NetApp Docker Volume Plugin')
+            expect(chef_run).to create_docker_installation('ontap_iscsi: default')
+            expect(chef_run).to enable_service('ontap_iscsi: docker')
+            expect(chef_run).to start_service('ontap_iscsi: docker')
+
+            expect(chef_run).to create_directory('ontap_iscsi: Directory /etc/netappdvp')
+            expect(chef_run).to create_file('ontap_iscsi: /etc/netappdvp/ontap_iscsi.json')
+            expect(chef_run).to run_execute('ontap_iscsi: Install NetApp Docker Volume Plug-in')
+            expect(chef_run).to run_execute('ontap_iscsi: Enable NetApp Docker Volume Plug-in')
             case platform
             when 'redhat', 'centos'
               %w(lsscsi iscsi-initiator-utils sg3_utils device-mapper-multipath).each do |pkg|
-                expect(chef_run).to install_package(pkg)
+                expect(chef_run).to install_package("ontap_iscsi: #{pkg}")
               end
-              expect(chef_run).to run_execute('Setup Multipath daemon')
+              expect(chef_run).to run_execute('ontap_iscsi: Setup Multipath daemon')
               %w(iscsid multipathd iscsi).each do |srv|
-                expect(chef_run).to enable_service(srv)
-                expect(chef_run).to start_service(srv)
+                expect(chef_run).to enable_service("ontap_iscsi: #{srv}")
+                expect(chef_run).to start_service("ontap_iscsi: #{srv}")
               end
 
             when 'ubuntu', 'debian'
               %w(open-iscsi lsscsi sg3-utils multipath-tools scsitools).each do |pkg|
-                expect(chef_run).to install_package(pkg)
+                expect(chef_run).to install_package("ontap_iscsi: #{pkg}")
               end
-              expect(chef_run).to create_file('/etc/multipath.conf')
+              expect(chef_run).to create_file('ontap_iscsi: /etc/multipath.conf')
               %w(open-iscsi multipath-tools).each do |srv|
-                expect(chef_run).to enable_service(srv)
-                expect(chef_run).to start_service(srv)
+                expect(chef_run).to enable_service("ontap_iscsi: #{srv}")
+                expect(chef_run).to start_service("ontap_iscsi: #{srv}")
               end
 
             end
-            expect(chef_run).to run_execute('Discover iSCSI Target')
-            expect(chef_run).to run_execute('Log into iSCSI Target')
+            expect(chef_run).to run_execute('ontap_iscsi: Discover iSCSI Target')
+            expect(chef_run).to run_execute('ontap_iscsi: Log into iSCSI Target')
           end
           it 'grants users access to docker group' do
             node.normal['docker']['members'] = 'root'
-            expect(chef_run).to create_group('docker')
+            expect(chef_run).to create_group('ontap_iscsi: docker')
           end
         end
       end

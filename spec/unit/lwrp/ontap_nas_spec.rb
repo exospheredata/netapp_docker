@@ -13,6 +13,8 @@ describe 'netapp_docker_test::ontap_nas' do
   before do
     stub_command('docker plugin list | grep netapp:latest').and_return(false)
     stub_command('docker plugin list | grep netapp | grep false').and_return(true)
+    stub_command('docker plugin list | grep netapp1:latest').and_return(false)
+    stub_command('docker plugin list | grep netapp1 | grep false').and_return(true)
   end
   context 'Succesfully converge' do
     platforms = {
@@ -55,28 +57,28 @@ describe 'netapp_docker_test::ontap_nas' do
             expect(chef_run).to run_execute('Create test nas volume')
 
             # LWRP Actions
-            expect(chef_run).to create_docker_installation('default')
-            expect(chef_run).to enable_service('docker')
-            expect(chef_run).to start_service('docker')
-            expect(chef_run).to create_directory('Directory path for config.json')
-            expect(chef_run).to create_file('/etc/netappdvp/config.json')
+            expect(chef_run).to create_docker_installation('netapp: default')
+            expect(chef_run).to enable_service('netapp: docker')
+            expect(chef_run).to start_service('netapp: docker')
+            expect(chef_run).to create_directory('netapp: Directory /etc/netappdvp')
+            expect(chef_run).to create_file('netapp: /etc/netappdvp/config.json')
             case platform
             when 'redhat', 'centos'
-              expect(chef_run).to install_package('nfs-utils')
+              expect(chef_run).to install_package('netapp: nfs-utils')
             when 'ubuntu', 'debian'
-              expect(chef_run).to install_package('nfs-common')
+              expect(chef_run).to install_package('netapp: nfs-common')
             end
-            expect(chef_run).to enable_service('rpcbind')
-            expect(chef_run).to start_service('rpcbind')
-            expect(chef_run).to create_directory('/etc/iscsi')
-            expect(chef_run).to create_directory('/etc/systemd/system/docker.service.d/')
-            expect(chef_run).to create_file('/etc/systemd/system/docker.service.d/netappdvp.conf')
-            systemctl = chef_run.execute('systemctl daemon-reload')
+            expect(chef_run).to enable_service('netapp: rpcbind')
+            expect(chef_run).to start_service('netapp: rpcbind')
+            expect(chef_run).to create_directory('netapp: /etc/iscsi')
+            expect(chef_run).to create_directory('netapp: /etc/systemd/system/docker.service.d/')
+            expect(chef_run).to create_file('netapp: /etc/systemd/system/docker.service.d/netappdvp.conf')
+            systemctl = chef_run.execute('netapp: systemctl daemon-reload')
             expect(systemctl).to do_nothing
-            conf_file = chef_run.file('/etc/systemd/system/docker.service.d/netappdvp.conf')
-            expect(conf_file).to notify('execute[systemctl daemon-reload]').to(:run).immediately
-            expect(chef_run).to run_execute('Install NetApp Docker Volume Plugin')
-            expect(chef_run).to run_execute('Enable NetApp Docker Volume Plugin')
+            conf_file = chef_run.file('netapp: /etc/systemd/system/docker.service.d/netappdvp.conf')
+            expect(conf_file).to notify('execute[netapp: systemctl daemon-reload]').to(:run).immediately
+            expect(chef_run).to run_execute('netapp: Install NetApp Docker Volume Plug-in')
+            expect(chef_run).to run_execute('netapp: Enable NetApp Docker Volume Plug-in')
           end
           it 'grants users access to docker group' do
             node.normal['docker']['members'] = 'root'
