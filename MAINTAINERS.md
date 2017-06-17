@@ -1,10 +1,6 @@
-#
-# This file is structured to be consumed by both humans and computers.
-# It is a TOML document containing Markdown
-#
-[Preamble]
-  title = "Maintainers"
-  text = """
+<!-- This is a generated file. Please do not edit directly -->
+
+# Maintainers
 This file lists how this cookbook project is maintained. When making changes to the system, this
 file tells you who needs to review your patch - you need a simple majority of maintainers
 for the relevant subsystems to provide a :+1: on your pull request. Additionally, you need
@@ -12,21 +8,11 @@ to not receive a veto from a Lieutenant or the Project Lead.
 
 Check out [How Cookbooks are Maintained](https://github.com/chef-cookbooks/community_cookbook_documentation/blob/master/CONTRIBUTING.MD)
 for details on the process and how to become a maintainer or the project lead.
-"""
 
-[Org]
-  [Org.Components]
-    [Org.Components.Core]
-      title = "Project Maintainer"
+# Project Maintainer
+* [Jeremy Goodrum](https://github.com/goodrum)
+	- [Email](mailto:jeremy@exospheredata.com)
 
-      lieutenant = 'goodrum'
-
-      maintainers = [
-        'goodrum'
-      ]
-
-[people]
-  [people.goodrum]
-    name = "Jeremy Goodrum"
-    github = "goodrum"
-    email = "jeremy@exospheredata.com"
+# Maintainers
+* [Jeremy Goodrum](https://github.com/goodrum)
+	- [Email](mailto:jeremy@exospheredata.com)

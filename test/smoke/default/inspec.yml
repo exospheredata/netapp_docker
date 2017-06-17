@@ -1,0 +1,11 @@
+name: netapp-docker-volume-plugin-test
+title: NetApp Docker Volume Plug-in test cookbook
+maintainer: 'Exosphere Data, LLC'
+maintainer: chef@exospheredata.com
+copyright: 'Exosphere Data, LLC'
+copyright_email: chef@exospheredata.com
+license: All Rights Reserved
+summary: An InSpec Compliance Profile for NetApp Docker Volume Plug-in test cookbook
+version: 1.0.0
+supports:
+  - os-family: linux
