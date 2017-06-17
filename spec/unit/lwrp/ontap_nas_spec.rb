@@ -13,10 +13,8 @@ describe 'netapp_docker_test::ontap_nas' do
   before do
     stub_command('docker plugin list | grep netapp:latest').and_return(false)
     stub_command('docker plugin list | grep netapp | grep false').and_return(true)
-    stub_command('docker plugin list | grep netapp1:latest').and_return(false)
-    stub_command('docker plugin list | grep netapp1 | grep false').and_return(true)
   end
-  context 'Succesfully converge' do
+  context 'When tested' do
     platforms = {
       'ubuntu' => {
         'versions' => ['12.04', '14.04', '16.04']
@@ -50,18 +48,24 @@ describe 'netapp_docker_test::ontap_nas' do
           let(:node) { runner.node }
           let(:chef_run) { runner.converge(described_recipe) }
 
-          it 'converges successfully' do
+          it 'it converges successfully' do
             expect { chef_run }.to_not raise_error
             expect(chef_run).to config_netapp_docker_ontap_plugin('netapp')
             expect(chef_run).to install_netapp_docker_ontap_plugin('netapp')
             expect(chef_run).to run_execute('Create test nas volume')
+          end
 
-            # LWRP Actions
+          # LWRP Actions
+          it 'it creates new configuration file' do
+            expect(chef_run).to create_directory('netapp: Directory /etc/netappdvp')
+            expect(chef_run).to create_file('netapp: /etc/netappdvp/config.json')
+          end
+          it 'it installs prerequisites for docker' do
             expect(chef_run).to create_docker_installation('netapp: default')
             expect(chef_run).to enable_service('netapp: docker')
             expect(chef_run).to start_service('netapp: docker')
-            expect(chef_run).to create_directory('netapp: Directory /etc/netappdvp')
-            expect(chef_run).to create_file('netapp: /etc/netappdvp/config.json')
+          end
+          it 'it installs NFS services and utilities' do
             case platform
             when 'redhat', 'centos'
               expect(chef_run).to install_package('netapp: nfs-utils')
@@ -73,16 +77,28 @@ describe 'netapp_docker_test::ontap_nas' do
             expect(chef_run).to create_directory('netapp: /etc/iscsi')
             expect(chef_run).to create_directory('netapp: /etc/systemd/system/docker.service.d/')
             expect(chef_run).to create_file('netapp: /etc/systemd/system/docker.service.d/netappdvp.conf')
+          end
+          it 'it installs the docker volume plugin' do
+            expect(chef_run).to run_execute('netapp: Install NetApp Docker Volume Plug-in')
+            expect(chef_run).to run_execute('netapp: Enable NetApp Docker Volume Plug-in')
+          end
+          it 'it grants users access to docker group' do
+            node.normal['docker']['members'] = 'root'
+            expect(chef_run).to create_group('docker')
+          end
+          it 'it will notify [systemctl daemon-reload] to run' do
             systemctl = chef_run.execute('netapp: systemctl daemon-reload')
             expect(systemctl).to do_nothing
             conf_file = chef_run.file('netapp: /etc/systemd/system/docker.service.d/netappdvp.conf')
             expect(conf_file).to notify('execute[netapp: systemctl daemon-reload]').to(:run).immediately
-            expect(chef_run).to run_execute('netapp: Install NetApp Docker Volume Plug-in')
-            expect(chef_run).to run_execute('netapp: Enable NetApp Docker Volume Plug-in')
           end
-          it 'grants users access to docker group' do
-            node.normal['docker']['members'] = 'root'
-            expect(chef_run).to create_group('docker')
+          it 'it skips installation if plugin exists' do
+            stub_command('docker plugin list | grep netapp:latest').and_return(true)
+            expect(chef_run).to_not run_execute('netapp: Install NetApp Docker Volume Plug-in')
+          end
+          it 'it skips enabling the plugin if already online' do
+            stub_command('docker plugin list | grep netapp | grep false').and_return(false)
+            expect(chef_run).to_not run_execute('netapp: Enable NetApp Docker Volume Plug-in')
           end
         end
       end

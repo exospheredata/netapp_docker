@@ -4,7 +4,7 @@ maintainer_email 'chef@exospheredata.com'
 license 'all_rights'
 description 'Installs/Configures the test cookbook for netapp_docker'
 long_description 'Installs/Configures the test cookbook for netapp_docker'
-version '0.1.0'
+version '1.0.0'
 
 depends 'netapp_docker'
 
