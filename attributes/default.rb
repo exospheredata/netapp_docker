@@ -12,6 +12,7 @@ default['docker']['members'] = nil
 # Required parameters
 default['netapp_docker']['config']['ndvp_config'] = 'netapp'
 default['netapp_docker']['config']['config_type'] = 'ontap-nas'
+default['netapp_docker']['config']['plugin_version'] = 'latest'
 default['netapp_docker']['config']['ontap_mgmt_ip'] = nil
 default['netapp_docker']['config']['ontap_data_ip'] = nil
 default['netapp_docker']['config']['svm'] = nil

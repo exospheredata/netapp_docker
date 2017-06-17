@@ -23,9 +23,9 @@ default_action :config
 
 # NetApp Docker Volume Plugin
 property :config_name, String, name_property: true, required: true # Sets the plugin name in the style of <config>:<version. Default: 'netapp'
-property :ndvp_config, String, required: true, default: 'config.json'
+property :ndvp_config, String, default: 'config.json'
 property :config_type, String, equal_to: %w(ontap-nas ontap-san), default: 'ontap-nas'
-property :plugin_version, String, required: true, default: 'latest'
+property :plugin_version, String, default: 'latest'
 
 # ONTAP details
 property :ontap_mgmt_ip, String, required: true, regex: [/^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/]
@@ -172,6 +172,7 @@ action_class do
       group "#{new_resource.name}: docker" do
         group_name 'docker'
         members node['docker']['members']
+        append true
         not_if { node['docker']['members'].nil? }
       end
 
@@ -304,6 +305,7 @@ action_class do
 
     execute "#{new_resource.name}: Log into iSCSI Target" do
       command "iscsiadm -m node -p #{new_resource.ontap_data_ip} --login"
+      not_if "iscsiadm -m session | grep #{new_resource.ontap_data_ip}"
     end
   end
 end

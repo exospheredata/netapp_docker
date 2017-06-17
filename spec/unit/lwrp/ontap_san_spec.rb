@@ -13,6 +13,7 @@ describe 'netapp_docker_test::ontap_san' do
   before do
     stub_command('docker plugin list | grep ontap_iscsi:latest').and_return(false)
     stub_command('docker plugin list | grep ontap_iscsi | grep false').and_return(true)
+    stub_command('iscsiadm -m session | grep 192.168.100.186').and_return(false)
   end
   context 'Succesfully converge' do
     platforms = {

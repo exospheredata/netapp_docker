@@ -10,6 +10,7 @@
 netapp_docker_ontap_plugin node['netapp_docker']['config']['ndvp_config'] do
   ndvp_config node['netapp_docker']['config']['ndvp_config']
   config_type node['netapp_docker']['config']['config_type']
+  plugin_version node['netapp_docker']['config']['plugin_version']
   ontap_mgmt_ip  node['netapp_docker']['config']['ontap_mgmt_ip']
   ontap_data_ip  node['netapp_docker']['config']['ontap_data_ip']
   svm node['netapp_docker']['config']['svm']

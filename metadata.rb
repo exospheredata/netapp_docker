@@ -3,7 +3,7 @@ maintainer 'Exosphere Data, LLC'
 maintainer_email 'chef@exospheredata.com'
 license 'all_rights'
 description 'Installs/Configures the NetApp Docker Volume Plug-in'
-long_description IO.read(File.join(File.dirname(__FILE__), 'README_desc.md'))
+long_description IO.read(File.join(File.dirname(__FILE__), 'README.md'))
 
 version '0.2.0'
 chef_version '>= 12.5' if respond_to?(:chef_version)

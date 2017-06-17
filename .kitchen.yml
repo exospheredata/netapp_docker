@@ -4,6 +4,10 @@ driver:
 
 provisioner:
   name: chef_zero
+  data_bags_path: "../../data_bags/"
+  # You many wish to test your CHEF::Log.<level> messages while using test-kitchen.  Change the below
+  # value to the level of choice.  For cleaner output, comment this option out.
+  log_level: info
   # You may wish to disable always updating cookbooks in CI or other testing environments.
   # For example:
   #   always_update_cookbooks: <%= !ENV['CI'] %>
@@ -17,10 +21,30 @@ platforms:
   - name: centos-7.2
 
 suites:
-  - name: default
+  - name: demo
     run_list:
-      - recipe[netapp_docker::default]
+      - recipe[netapp_docker_test::default]
     verifier:
       inspec_tests:
         - test/smoke/default
     attributes:
+      docker:
+        members: 'vagrant'
+      netapp_docker_test:
+        config:
+          netapp:
+            ontap_mgmt_ip: # Set as your NetApp SVM Management IP
+            ontap_data_ip: # Set as your NetApp SVM NFS IP
+            svm: # Set as your NetApp SVM Name
+            aggregate: # Set as valid NetApp aggregate
+            username: # Set as SVM admin user
+            password: # Set as SVM user password
+            prefix: 'netapp_docker_test_'
+          ontap_iscsi:
+            ontap_mgmt_ip: # Set as your NetApp SVM Management IP
+            ontap_data_ip: # Set as your NetApp SVM NFS IP
+            svm: # Set as your NetApp SVM Name
+            aggregate: # Set as valid NetApp aggregate
+            username: # Set as SVM admin user
+            password: # Set as SVM user password
+            prefix: 'netapp_docker_test_'
